@@ -1,0 +1,29 @@
+class  A{
+def  f ( self ,xs ){
+if   ( xs )  {print( "nonempty" )}
+else{  print("empty")  }
+
+d = {   "a":1, "b" : {1,2,3} , "c": {"x":  1} }
+# comment   with   spaces
+
+for   x  in   xs{
+if  x<0{continue}
+            else{pass}
+try{
+with   open("a.txt") as f{  pass  }
+}except   Exception   as   e{
+print("err",e)
+}finally{ print("done") }
+
+match   x{
+case  0{ print("zero") }
+case  1 {print("one")}
+case  _{   print("other")   }
+}
+
+}
+
+while   False {   # never
+}
+
+}  }

@@ -20,6 +20,7 @@ dependencies = []
 [project.scripts]
 typan = "cli:main"
 typan-check = "cli_check:main"
+typan-fmt = "cli_fmt:main"
 
 
 [tool.setuptools]
