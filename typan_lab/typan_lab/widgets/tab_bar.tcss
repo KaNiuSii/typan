@@ -1,0 +1,9 @@
+TabBar {
+  height: 3;
+}
+
+TabBar > #tabs {
+  height: 3;
+  padding: 0 1;
+  align: left middle;
+}

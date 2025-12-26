@@ -1,0 +1,8 @@
+EditorPane {
+  height: 1fr;
+}
+
+EditorPane > #editor-text {
+  height: 1fr;
+  border: solid $primary;
+}

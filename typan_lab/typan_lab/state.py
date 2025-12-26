@@ -9,7 +9,16 @@ from typan_lab.settings import Settings
 class Buffer:
     path: Path
     text: str
+    clean_text: str
     dirty: bool = False
+
+    def set_text(self, new_text: str) -> None:
+        self.text = new_text
+        self.dirty = (self.text != self.clean_text)
+
+    def mark_saved(self) -> None:
+        self.clean_text = self.text
+        self.dirty = False
 
 @dataclass
 class AppState:
@@ -22,6 +31,6 @@ class AppState:
     def ensure_buffer(self, path: Path, text: str) -> Buffer:
         buf = self.buffers.get(path)
         if buf is None:
-            buf = Buffer(path=path, text=text, dirty=False)
+            buf = Buffer(path=path, text=text, clean_text=text, dirty=False)
             self.buffers[path] = buf
         return buf

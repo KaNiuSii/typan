@@ -1,27 +1,40 @@
 TabItem {
-  width: auto;        /* kluczowe: nie rozciągaj */
+  width: auto;
   height: 3;
   padding: 0 1;
   border: round $primary 25%;
   background: $surface;
   align: left middle;
+  color: $primary;
 }
 
 TabItem.is-active {
   border: round $primary;
 }
 
-.tab-star {
+TabItem > Button.tab-title,
+TabItem > Button.tab-close {
+  border: none;
+  background: transparent;
+  min-height: 1;
+  height: 1;
+  content-align: center middle;
+}
+
+/* gwiazdka */
+TabItem > .tab-star {
   width: 2;
   content-align: center middle;
 }
 
-.tab-title {
+/* tytuł */
+TabItem > Button.tab-title {
   width: auto;
   padding: 0 1;
 }
 
-.tab-close {
+/* close */
+TabItem > Button.tab-close {
   width: 3;
   min-width: 3;
   padding: 0;

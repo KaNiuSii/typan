@@ -1,4 +1,4 @@
-EditorTabs {
+EditorPanel {
   height: 1fr;
   border: tall;
 }
