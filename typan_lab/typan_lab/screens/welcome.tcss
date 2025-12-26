@@ -1,0 +1,80 @@
+/* Welcome background */
+/* ----------------------------------------------------------------------------------------------------------------- */
+
+#welcome-root {
+  align: center middle;
+}
+
+#welcome-card {
+  height: 50%;
+  width: 50%;
+  padding: 2 3;
+  border: tall $primary;
+  background: $panel;
+}
+
+#title {
+  text-style: bold;
+}
+
+#subtitle {
+  margin-bottom: 1;
+  color: $text-muted;
+}
+
+#path-row {
+  height: auto;
+  margin-top: 1;
+}
+
+#path {
+  width: 1fr;
+  margin-right: 1;
+}
+
+#actions {
+  margin-top: 1;
+}
+
+#hint {
+  margin-top: 1;
+  color: $text-muted;
+}
+
+#exit {
+  margin-right: 2;
+}
+
+#open {
+  margin-left: 2;
+}
+
+
+/* ----------------------------------------------------------------------------------------------------------------- */
+
+/* Modal */
+/* ----------------------------------------------------------------------------------------------------------------- */
+
+DirectoryPickerModal {
+  align: center middle;
+}
+
+DirectoryPickerModal > #modal {
+  width: 90;
+  height: 30;
+  padding: 1 2;
+  border: tall $primary;
+  background: $panel;
+}
+
+#modal-actions {
+  margin-top: 1;
+  align: right middle;
+}
+
+#modal-title {
+  text-style: bold;
+  margin-bottom: 1;
+}
+
+/* ----------------------------------------------------------------------------------------------------------------- */

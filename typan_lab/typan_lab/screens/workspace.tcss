@@ -1,0 +1,26 @@
+#workspace-root {
+  height: 1fr;
+}
+
+#workspace-main {
+  height: 1fr;
+}
+
+#left {
+  width: 32;
+  border: tall $primary;
+}
+
+#editor {
+  height: 1fr;
+  border: solid $primary;
+}
+
+#terminal {
+  height: 12;
+}
+
+#status {
+  height: 1;
+  border-top: solid $primary;
+}

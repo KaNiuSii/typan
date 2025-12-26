@@ -1,0 +1,5 @@
+ProjectTree {
+  height: 1fr;
+  min-width: 24;
+  border: tall $primary;
+}

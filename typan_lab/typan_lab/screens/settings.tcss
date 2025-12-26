@@ -1,0 +1,62 @@
+SettingsScreen {
+  align: center middle;
+  padding: 2;
+}
+
+/* Panel */
+#settings-root {
+  width: 72;
+  max-width: 90%;
+  padding: 2 3;
+
+  border: round $primary;
+}
+
+/* Title */
+#settings-title {
+  content-align: left middle;
+  text-style: bold;
+
+  margin-bottom: 1;
+  padding-bottom: 1;
+  border-bottom: solid $primary;
+}
+
+/* Form rows */
+#settings-root > Horizontal {
+  height: auto;
+  margin: 0 0 1 0;
+  align: left middle;
+}
+
+/* Labels */
+#settings-root Label {
+  width: 18;
+  color: $text 80%;
+  content-align: left middle;
+  padding-right: 1;
+}
+
+/* Select */
+#settings-root Select {
+  width: 1fr;
+}
+
+/* Actions */
+#settings-actions {
+  margin-top: 1;
+  padding-top: 1;
+  border-top: solid $primary 20%;
+
+  height: auto;
+  align: right middle;
+}
+
+#settings-actions Button {
+  min-width: 14;
+  margin-right: 4;
+}
+
+#settings-actions Button.-primary {
+  text-style: bold;
+}

@@ -1,0 +1,15 @@
+EditorTabs {
+  height: 1fr;
+  border: tall;
+}
+
+#editor-text {
+  height: 1fr;
+  border: solid $primary;
+}
+
+#tabs {
+  height: 3;
+  padding: 0 1;
+  align: left middle;
+}
