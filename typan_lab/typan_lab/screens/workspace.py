@@ -59,6 +59,13 @@ class WorkspaceScreen(Screen):
             yield Footer()
 
     def on_mount(self) -> None:
+        app = self.app  # type: ignore
+        state = app.state
+
+        term = self.query_one(TerminalPanel)
+        term.set_cwd(state.project_root)
+        term.start_terminal()
+
         self._sync_tabs_and_status()
         self._sync_editor_text()
 
