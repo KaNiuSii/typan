@@ -30,6 +30,14 @@ class SettingsScreen(Screen):
                     id="indent_size",
                 )
 
+            with Horizontal():
+                yield Label("Format on:")
+                yield Select(
+                    [("Off", "off"), ("On Save", "on_save"), ("On Update", "on_update")],
+                    value=s.format_mode,
+                    id="format_mode",
+                )
+
             with Horizontal(id="settings-actions"):
                 yield Button("Close", id="close")
                 yield Button("Apply", id="apply", variant="primary")
@@ -47,7 +55,9 @@ class SettingsScreen(Screen):
         app = self.app  # type: ignore
         indent_style = self.query_one("#indent_style", Select).value
         indent_size = int(self.query_one("#indent_size", Select).value)
+        format_mode = self.query_one("#format_mode", Select).value
 
+        app.state.settings.format_mode = format_mode # type: ignore
         app.state.settings.indent_style = indent_style  # type: ignore
         app.state.settings.indent_size = indent_size  # type: ignore
 

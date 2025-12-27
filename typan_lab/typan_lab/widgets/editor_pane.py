@@ -32,9 +32,34 @@ class EditorPane(Widget):
 
     def set_text(self, text: str) -> None:
         editor = self.query_one("#editor-text", TextArea)
+
+        # --- capture state ---
+        try:
+            cursor = editor.cursor_location  # (row, col)
+        except Exception:
+            cursor = (0, 0)
+
+        try:
+            scroll_y = editor.scroll_y
+            scroll_x = editor.scroll_x
+        except Exception:
+            scroll_y, scroll_x = 0, 0
+
         self._suspend_change_event = True
         editor.load_text(text)
         self._suspend_change_event = False
+
+        # --- restore state (clamp) ---
+        try:
+            # clamp row
+            lines = text.splitlines() or [""]
+            row = max(0, min(cursor[0], len(lines) - 1))
+            col = max(0, min(cursor[1], len(lines[row])))
+
+            editor.cursor_location = (row, col)
+            editor.scroll_to(scroll_y, scroll_x, animate=False)
+        except Exception:
+            pass
 
     def on_text_area_changed(self, event: TextArea.Changed) -> None:
         if self._suspend_change_event:

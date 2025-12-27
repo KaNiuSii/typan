@@ -150,6 +150,20 @@ class TerminalPanel(Widget):
             f'python "{out_py}"'
         )
 
+    def format_typan_file(self, path: Path, indent_size: int = 4) -> None:
+        """Run typan-fmt in-place on a .ty file."""
+        if not self._session:
+            self._append("[ERROR] Terminal not started.\n")
+            return
+        if path.suffix.lower() != ".ty":
+            return
+
+        # typan-fmt --indent expects an int string
+        self._append(f"\n[fmt] typan-fmt --in-place {path.name}\n")
+        self._session.send_line(
+            f'typan-fmt "{path}" --in-place --indent {int(indent_size)}'
+        )
+
     def run_python_file(self, path: Path) -> None:
         if not self._session:
             self._append("[ERROR] Terminal not started.\n")

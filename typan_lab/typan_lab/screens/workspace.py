@@ -53,6 +53,7 @@ class WorkspaceScreen(Screen):
     def __init__(self, project_root: Path) -> None:
         super().__init__()
         self.project_root = project_root
+        self._fmt_timer = None
 
     def compose(self) -> ComposeResult:
         with Vertical(id="workspace-root"):
@@ -102,6 +103,17 @@ class WorkspaceScreen(Screen):
             return
 
         app.buffer_service.save_text(buf.path, buf.text)
+
+        settings = state.settings  # type: ignore
+        if settings.format_mode == "on_save" and state.active_file and state.active_file.suffix.lower() == ".ty":
+            # uruchom formatter w terminalu
+            term = self.query_one(TerminalPanel)
+            term.format_typan_file(state.active_file, indent_size=settings.indent_size)
+
+            # a potem przeładuj plik z dysku do bufora + edytora (żeby zobaczyć efekt)
+            # UWAGA: formatter działa async w terminalu, więc najprościej:
+            # - po krótkim opóźnieniu odczytać plik
+            self._run_async(self._reload_active_after_delay(0.15))
 
         buf.clean_text = buf.text
         buf.dirty = False
@@ -331,9 +343,84 @@ class WorkspaceScreen(Screen):
         else:
             self._sync_status_only()
 
+        self._schedule_format_on_update()
+
     # ------------------------------------------------------------------
     # State mutations
     # ------------------------------------------------------------------
+
+    def _format_active_now(self) -> None:
+        app = self.app  # type: ignore
+        state = app.state
+        settings = state.settings  # type: ignore
+        path = state.active_file
+
+        if not path or path.suffix.lower() != ".ty":
+            return
+
+        # najpierw zapisz bieżący bufor (żeby formatter miał co formatować)
+        buf = state.buffers.get(path)
+        if buf is None:
+            return
+        app.buffer_service.save_text(path, buf.text)
+        buf.clean_text = buf.text
+        buf.dirty = False
+        self._sync_tabs_and_status()
+
+        term = self.query_one(TerminalPanel)
+        term.format_typan_file(path, indent_size=settings.indent_size)
+
+        self._run_async(self._reload_active_after_delay(0.2))
+
+
+    def _schedule_format_on_update(self) -> None:
+        app = self.app  # type: ignore
+        state = app.state
+        settings = state.settings  # type: ignore
+
+        path = state.active_file
+        if not path or path.suffix.lower() != ".ty":
+            return
+        if settings.format_mode != "on_update":
+            return
+
+        # cancel previous timer
+        if self._fmt_timer is not None:
+            try:
+                self._fmt_timer.stop()
+            except Exception:
+                pass
+            self._fmt_timer = None
+
+        # debounce: 700ms po ostatnim klawiszu
+        self._fmt_timer = self.set_timer(0.7, lambda: self._format_active_now())
+
+
+    async def _reload_active_after_delay(self, delay: float) -> None:
+        await asyncio.sleep(delay)
+
+        app = self.app  # type: ignore
+        state = app.state
+        path = state.active_file
+        if not path or not path.exists() or not path.is_file():
+            return
+
+        try:
+            text = path.read_text(encoding="utf-8")
+        except Exception:
+            return
+
+        buf = state.buffers.get(path)
+        if buf is None:
+            return
+
+        buf.text = text
+        buf.clean_text = text
+        buf.dirty = False
+
+        self._sync_tabs_and_status()
+        self._sync_editor_text()
+
 
     def _open_file(self, path: Path) -> None:
         app = self.app  # type: ignore
