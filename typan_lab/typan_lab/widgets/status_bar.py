@@ -7,14 +7,6 @@ from textual.widgets import Label
 from textual.reactive import reactive
 
 class StatusBar(Widget):
-    DEFAULT_CSS = """
-    StatusBar {
-        height: 1;
-        border-top: solid $primary;
-        padding: 0 1;
-    }
-    """
-
     active_file: Path | None = reactive(None)
     dirty: bool = reactive(False)
 

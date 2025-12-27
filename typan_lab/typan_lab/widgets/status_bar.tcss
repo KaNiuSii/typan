@@ -1,0 +1,5 @@
+StatusBar {
+    height: 1;
+    border-top: solid $primary;
+    padding: 0 1;
+}
