@@ -3,3 +3,23 @@ ProjectTree {
   min-width: 24;
   border: tall $primary;
 }
+
+#project-toolbar {
+  height: 3;
+  padding: 0 1;
+  align: left middle;
+}
+
+#project-title {
+  width: 1fr;
+  content-align: left middle;
+  color: $text-muted;
+}
+
+.pt-btn {
+  width: 4;
+  min-width: 4;
+  padding: 0;
+  border: none;
+  background: transparent;
+}

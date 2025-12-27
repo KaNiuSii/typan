@@ -1,0 +1,29 @@
+ConfirmModal {
+  align: center middle;
+}
+
+#cf-root {
+  width: 70;
+  height: 50%;
+  padding: 1 2;
+  border: round $primary;
+  background: $surface;
+}
+
+#cf-title {
+  margin-bottom: 1;
+}
+
+#cf-message {
+  margin-bottom: 1;
+  color: $text-muted;
+}
+
+#cf-buttons {
+  height: 3;
+  align: right middle;
+}
+
+#cf-buttons > Button {
+  margin-left: 1;
+}

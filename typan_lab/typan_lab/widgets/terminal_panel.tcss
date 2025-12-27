@@ -1,0 +1,5 @@
+TerminalPanel {
+        height: 12;
+        min-height: 6;
+        border: tall $primary;
+    }

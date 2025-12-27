@@ -2,13 +2,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import asyncio
+import shutil
+
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import Footer
 
-from typan_lab.widgets.project_tree import ProjectTree, OpenFileRequested
 from typan_lab.widgets.terminal_panel import TerminalPanel
 from typan_lab.widgets.status_bar import StatusBar
 
@@ -17,6 +19,18 @@ from typan_lab.widgets.editor_panel import EditorPanel
 from typan_lab.widgets.tab_bar import TabClosed, ActiveTabRequested
 from typan_lab.widgets.editor_pane import BufferEdited
 
+from typan_lab.modals.name_prompt_modal import NamePromptModal, NamePromptResult
+from typan_lab.modals.confirm_modal import ConfirmModal, ConfirmResult
+
+from typan_lab.widgets.project_tree import (
+    ProjectTree,
+    OpenFileRequested,
+    RefreshRequested,
+    CreateFileRequested,
+    CreateFolderRequested,
+    RenamePathRequested,
+    DeletePathRequested,
+)
 
 class WorkspaceScreen(Screen):
     BINDINGS = [
@@ -24,6 +38,9 @@ class WorkspaceScreen(Screen):
         Binding("ctrl+w", "close_tab", "Close tab", priority=True),
         Binding("ctrl+p", "command_palette", "Command", priority=True),
     ]
+
+    def _run_async(self, coro) -> None:
+        asyncio.create_task(coro)
 
     def __init__(self, project_root: Path) -> None:
         super().__init__()
@@ -78,6 +95,139 @@ class WorkspaceScreen(Screen):
         buf.dirty = False
 
         self._sync_tabs_and_status()
+
+    async def on_refresh_requested(self, msg: RefreshRequested) -> None:
+        await self.query_one(ProjectTree).reload_tree()
+
+    async def _create_file(self, parent: Path, name: str) -> None:
+        name = name.strip()
+        if not name:
+            return
+        new_path = parent / name
+        if new_path.exists():
+            self.query_one(TerminalPanel).write(f"\n> File already exists: {new_path}\n")
+            return
+        new_path.write_text("", encoding="utf-8")
+        await self.query_one(ProjectTree).reload_tree()
+
+    async def on_create_file_requested(self, msg: CreateFileRequested) -> None:
+        parent = msg.parent_dir
+
+        def after(result: NamePromptResult | None) -> None:
+            if result is None:
+                return
+            self._run_async(self._create_file(parent, result.name))
+
+        await self.app.push_screen(NamePromptModal("New File", placeholder="filename.ext"), after)
+
+    async def _create_folder(self, parent: Path, name: str) -> None:
+        name = name.strip()
+        if not name:
+            return
+        new_path = parent / name
+        if new_path.exists():
+            self.query_one(TerminalPanel).write(f"\n> Folder already exists: {new_path}\n")
+            return
+        new_path.mkdir(parents=True, exist_ok=False)
+        await self.query_one(ProjectTree).reload_tree()
+
+    async def on_create_folder_requested(self, msg: CreateFolderRequested) -> None:
+        parent = msg.parent_dir
+
+        def after(result: NamePromptResult | None) -> None:
+            if result is None:
+                return
+            self._run_async(self._create_folder(parent, result.name))
+
+        await self.app.push_screen(NamePromptModal("New Folder", placeholder="folder name"), after)
+
+    async def _rename_path(self, path: Path, parent: Path, new_name: str) -> None:
+        new_name = new_name.strip()
+        if not new_name:
+            return
+
+        new_path = parent / new_name
+        if new_path.exists():
+            self.query_one(TerminalPanel).write(f"\n> Target already exists: {new_path}\n")
+            return
+
+        path.rename(new_path)
+
+        # sync app state if renamed file was open
+        app = self.app  # type: ignore
+        state = app.state
+
+        if path in state.open_files:
+            idx = state.open_files.index(path)
+            state.open_files[idx] = new_path
+
+        if state.active_file == path:
+            state.active_file = new_path
+
+        if path in state.buffers:
+            buf = state.buffers.pop(path)
+            # jeśli Buffer.path jest modyfikowalne:
+            try:
+                buf.path = new_path
+            except Exception:
+                pass
+            state.buffers[new_path] = buf
+
+        await self.query_one(ProjectTree).reload_tree()
+        self._sync_tabs_and_status()
+        self._sync_editor_text()
+
+    async def on_rename_path_requested(self, msg: RenamePathRequested) -> None:
+        path = msg.path
+        if not path.exists():
+            return
+
+        parent = path.parent
+        initial = path.name
+
+        def after(result: NamePromptResult | None) -> None:
+            if result is None:
+                return
+            self._run_async(self._rename_path(path, parent, result.name))
+
+        await self.app.push_screen(NamePromptModal("Rename", placeholder="new name", initial=initial), after)
+
+    async def _delete_path(self, path: Path) -> None:
+        app = self.app  # type: ignore
+        state = app.state
+
+        def close_if_open(p: Path) -> None:
+            if p in state.open_files:
+                state.open_files.remove(p)
+            if state.active_file == p:
+                state.active_file = state.open_files[-1] if state.open_files else None
+            state.buffers.pop(p, None)
+
+        if path.is_dir():
+            # usuwa też niepuste
+            shutil.rmtree(path)
+        else:
+            close_if_open(path)
+            path.unlink()
+
+        await self.query_one(ProjectTree).reload_tree()
+        self._sync_tabs_and_status()
+        self._sync_editor_text()
+
+    async def on_delete_path_requested(self, msg: DeletePathRequested) -> None:
+        path = msg.path
+        if not path.exists():
+            return
+
+        def after(result: ConfirmResult) -> None:
+            if not result.confirmed:
+                return
+            self._run_async(self._delete_path(path))
+
+        await self.app.push_screen(
+            ConfirmModal("Delete", f"Delete '{path.name}'?", yes_text="Delete", no_text="Cancel"),
+            after,
+        )
 
     # ------------------------------------------------------------------
     # Message handlers
@@ -168,6 +318,15 @@ class WorkspaceScreen(Screen):
     # UI sync
     # ------------------------------------------------------------------
 
+    def _sync_project_tree(self) -> None:
+        app = self.app  # type: ignore
+        state = app.state
+
+        tree = self.query_one(ProjectTree)
+        tree.set_active_file(state.active_file)
+        dirty_map = {p: state.buffers[p].dirty for p in state.buffers.keys()}
+        tree.set_dirty_map(dirty_map)
+
     def _sync_tabs_and_status(self) -> None:
         app = self.app  # type: ignore
         state = app.state
@@ -190,6 +349,9 @@ class WorkspaceScreen(Screen):
         }
         editor.set_tabs(state.open_files, state.active_file, dirty_map)
 
+        self._sync_project_tree()
+
+
     def _sync_editor_text(self) -> None:
         app = self.app  # type: ignore
         state = app.state
@@ -199,6 +361,8 @@ class WorkspaceScreen(Screen):
             editor.set_editor(active_file=state.active_file, text=state.buffers[state.active_file].text)
         else:
             editor.set_editor(active_file=None, text="")
+
+        self._sync_project_tree()
 
     def _sync_status_only(self) -> None:
         app = self.app  # type: ignore
@@ -211,3 +375,4 @@ class WorkspaceScreen(Screen):
             and state.active_file in state.buffers
             and state.buffers[state.active_file].dirty
         )
+        self._sync_project_tree()

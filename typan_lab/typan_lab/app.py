@@ -19,7 +19,7 @@ from typan_lab.screens.welcome import WelcomeScreen
 
 from typan_lab.style_loader import load_tcss, discover_tcss_near_py
 
-_COMPONENT_REL = discover_tcss_near_py("typan_lab", subpackages=("screens", "widgets"))
+_COMPONENT_REL = discover_tcss_near_py("typan_lab", subpackages=("screens", "widgets", "modals"))
 _CSS_FILES = [str(ir.files(mod) / fname) for (mod, fname) in _COMPONENT_REL]
 
 class TypanLabApp(App):

@@ -34,7 +34,7 @@ class TabItem(Horizontal):
     """
 
     _STAR_CLEAN = " "
-    _STAR_DIRTY = "✷"
+    _STAR_DIRTY = "●"
 
     def __init__(self, model: TabItemModel) -> None:
         self.model = model

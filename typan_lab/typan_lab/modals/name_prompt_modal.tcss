@@ -1,0 +1,25 @@
+NamePromptModal {
+  align: center middle;
+}
+
+#np-root {
+  width: 60;
+  height: 50%;
+  padding: 1 2;
+  border: round $primary;
+  background: $surface;
+}
+
+#np-title {
+  margin-bottom: 1;
+}
+
+#np-buttons {
+  margin-top: 1;
+  height: 3;
+  align: right middle;
+}
+
+#np-buttons > Button {
+  margin-left: 1;
+}
