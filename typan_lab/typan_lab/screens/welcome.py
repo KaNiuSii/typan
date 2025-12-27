@@ -4,9 +4,12 @@ from pathlib import Path
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
-from textual.widgets import Button, Input, Static
+from textual.widgets import Button, Input, Static, Checkbox
 
 from typan_lab.screens.dir_picker import DirectoryPickerModal
+
+import shutil
+import subprocess
 
 
 class WelcomeScreen(Screen):
@@ -21,6 +24,10 @@ class WelcomeScreen(Screen):
                 with Horizontal(id="path-row"):
                     yield Input(placeholder="Project root path…", id="path")
                     yield Button("Choose…", id="choose")
+
+                with Vertical(id="welcome-options"):
+                    yield Checkbox("Create main script", id="opt-main", value=True)
+                    yield Checkbox("Add virtual environment (.venv)", id="opt-venv", value=False)
 
                 with Horizontal(id="actions"):
                     yield Button("Exit", id="exit")
@@ -66,4 +73,47 @@ class WelcomeScreen(Screen):
             self.notify("To nie jest poprawny folder.", severity="error")
             return
 
+        create_main = self.query_one("#opt-main", Checkbox).value
+        create_venv = self.query_one("#opt-venv", Checkbox).value
+
+        if create_main:
+            self._ensure_main_ty(root)
+
+        if create_venv:
+            self._ensure_venv(root)
+
         self.app.open_workspace(root)
+
+    def _ensure_main_ty(self, root: Path) -> None:
+        path = root / "main.ty"
+        if path.exists():
+            return
+        path.write_text(
+            "# main.ty\n\n"
+            "def main(){\n"
+            "    pass\n"
+            "}\n\n"
+            "main()\n",
+            encoding="utf-8",
+        )
+
+    def _ensure_venv(self, root: Path) -> None:
+        venv_dir = root / ".venv"
+        if venv_dir.exists():
+            return
+
+        py = shutil.which("python") or shutil.which("python3")
+        if not py:
+            return
+
+        try:
+            subprocess.run(
+                [py, "-m", "venv", str(venv_dir)],
+                cwd=str(root),
+                check=False,  # bez wyjątku; cicho ignoruj błędy
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        except Exception:
+            return
+

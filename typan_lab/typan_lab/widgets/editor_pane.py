@@ -25,7 +25,7 @@ class EditorPane(Widget):
         self._suspend_change_event = False
 
     def compose(self) -> ComposeResult:
-        yield TextArea("", id="editor-text")
+        yield TextArea.code_editor("", id="editor-text", language="python")
 
     def set_active_file(self, path: Path | None) -> None:
         self.active_file = path

@@ -1,0 +1,20 @@
+TopBar {
+  height: 5;          /* jak chcesz jeszcze cieńszy to 2 */
+  background: $panel;
+  border-bottom: solid $primary;
+}
+
+TopBar > #topbar {
+  height: 100%;
+  align: left middle;
+  padding: 0 1;
+}
+
+TopBar Button {
+  height: 1;
+}
+
+#topbar-info {
+  margin-left: 2;
+  opacity: 0.8;
+}

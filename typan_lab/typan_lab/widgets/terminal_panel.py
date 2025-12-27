@@ -70,10 +70,92 @@ class TerminalPanel(Widget):
             return
 
         self._append("PTY terminal ready.\n")
+
+        self._try_activate_venv()
+
         self._inp.disabled = False
         self._inp.focus()
 
+
         self._poll_timer = self.set_interval(0.05, self._poll)
+
+    def _try_activate_venv(self) -> None:
+        """If .venv exists in cwd, activate it in the PowerShell session."""
+        if not self._session or not self._cwd:
+            return
+
+        venv_dir = self._cwd / ".venv"
+        if not venv_dir.exists() or not venv_dir.is_dir():
+            return
+
+        activate = venv_dir / "Scripts" / "Activate.ps1"
+        if not activate.exists():
+            return
+
+        cmd = f'& "{activate}"'
+        self._append(f"[venv] Activating: {venv_dir}\n")
+        self._session.send_line(cmd)
+
+        self._fetch_debug_typan()
+
+    def _fetch_debug_typan(self) -> None:
+        if not self._session or not self._cwd:
+            return
+
+        pkg_root = Path(r"C:\Users\Kacper\Desktop\typan\typan")
+        if not pkg_root.exists():
+            return
+
+        if not (pkg_root / "pyproject.toml").exists() and not (pkg_root / "setup.py").exists():
+            return
+
+        self._append("[typan] Installing editable package...\n")
+
+        try:
+            self._session.send_line("python -m pip install -U pip setuptools wheel")
+
+            self._session.send_line(f'pip install -e "{pkg_root}"')
+        except Exception:
+            self._append("[typan] Couldn't install package.\n")
+            return
+
+    def run_typan_file(self, path: Path, out_dir_name: str = "transpilled") -> None:
+        if not self._session or not self._cwd:
+            self._append("[ERROR] Terminal not ready.\n")
+            return
+
+        if path.suffix.lower() != ".ty":
+            self._append(f"[WARN] Not a .ty file: {path.name}\n")
+            return
+
+        root = self._cwd
+        out_dir = root / out_dir_name
+        out_py = out_dir / f"{path.stem}.py"
+
+        # 1) mkdir transpilled (Python-side, no shell bullshit)
+        try:
+            out_dir.mkdir(exist_ok=True)
+        except Exception as e:
+            self._append(f"[ERROR] Failed to create {out_dir}: {e}\n")
+            return
+
+        # 2) wrzucamy DWIE PROSTE KOMENDY do terminala
+        self._append(f"\n[run] typan {path.name} -> {out_dir_name}/{out_py.name}\n")
+
+        self._session.send_line(
+            f'typan "{path}" -o "{out_py}"'
+        )
+
+        self._session.send_line(
+            f'python "{out_py}"'
+        )
+
+    def run_python_file(self, path: Path) -> None:
+        if not self._session:
+            self._append("[ERROR] Terminal not started.\n")
+            return
+        self._append(f"\n[run] python {path.name}\n")
+        self._session.send_line(f'python "{path}"')
 
     def on_unmount(self) -> None:
         if self._poll_timer is not None:

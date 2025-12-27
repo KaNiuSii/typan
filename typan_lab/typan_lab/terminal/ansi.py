@@ -10,6 +10,9 @@ _OSC = re.compile(r"\x1b\].*?(?:\x07|\x1b\\)")
 _ESC = re.compile(r"\x1b[@-Z\\-_]")
 
 def strip_ansi(text: str) -> str:
+    text = text.replace("\r\n", "\n")
+    text = text.replace("\r", "\n")
+
     text = _OSC.sub("", text)
     text = _CSI.sub("", text)
     text = _ESC.sub("", text)

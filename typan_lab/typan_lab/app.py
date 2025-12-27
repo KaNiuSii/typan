@@ -41,6 +41,7 @@ class TypanLabApp(App):
         self._initial_root = project_root
 
         self.state.settings = self.prefs.load()
+        self.state.fetch_debug_typan = True
         self.apply_settings()
 
     def on_mount(self) -> None:

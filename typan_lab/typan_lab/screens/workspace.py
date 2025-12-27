@@ -13,6 +13,7 @@ from textual.screen import Screen
 from textual.widgets import Footer
 
 from typan_lab.widgets.horizontal_split_handle import HorizontalSplitHandle
+from typan_lab.widgets.top_bar import TopBar, RunRequested
 from typan_lab.widgets.vertical_split_handle import VerticalSplitHandle
 from typan_lab.widgets.terminal_panel import TerminalPanel
 from typan_lab.widgets.status_bar import StatusBar
@@ -55,6 +56,7 @@ class WorkspaceScreen(Screen):
 
     def compose(self) -> ComposeResult:
         with Vertical(id="workspace-root"):
+            yield TopBar(id="topbar")
             with Horizontal(id="workspace-main"):
                 yield ProjectTree(self.project_root, id="left")
                 yield VerticalSplitHandle(min_width=18, max_width=80, id="left-split")
@@ -242,6 +244,32 @@ class WorkspaceScreen(Screen):
     # ------------------------------------------------------------------
     # Message handlers
     # ------------------------------------------------------------------
+
+    def on_run_requested(self, msg) -> None:
+        app = self.app  # type: ignore
+        state = app.state
+
+        path = state.active_file
+        if path is None:
+            self.notify("No active file to run.", severity="warning")
+            return
+
+        # auto-save jeśli dirty
+        buf = state.buffers.get(path)
+        if buf and buf.dirty:
+            app.buffer_service.save_text(buf.path, buf.text)
+            buf.clean_text = buf.text
+            buf.dirty = False
+            self._sync_tabs_and_status()
+
+        term = self.query_one(TerminalPanel)
+
+        if path.suffix.lower() == ".ty":
+            term.run_typan_file(path, out_dir_name="transpilled")
+        elif path.suffix.lower() == ".py":
+            term.run_python_file(path)
+        else:
+            self.notify(f"Can't run: {path.suffix}", severity="warning")
 
     def on_horizontal_split_handle_split_dragged(self, msg: HorizontalSplitHandle.SplitDragged) -> None:
         right = self.query_one("#right")

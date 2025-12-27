@@ -27,6 +27,7 @@ class AppState:
     active_file: Path | None = None
     buffers: dict[Path, Buffer] = field(default_factory=dict)
     settings: Settings = field(default_factory=Settings)
+    fetch_debug_typan: bool = field(default=False)
 
     def ensure_buffer(self, path: Path, text: str) -> Buffer:
         buf = self.buffers.get(path)
