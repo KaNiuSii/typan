@@ -2,8 +2,17 @@
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $here
 
-Start-Process powershell -ArgumentList @(
+Start-Process powershell -WindowStyle Maximized -ArgumentList @(
   "-NoExit",
   "-Command",
-  "./.venv\Scripts\Activate.ps1; mode con: cols=200 lines=60; textual run --dev run_app.py"
-) -WindowStyle Maximized
+  @'
+  cd "$PSScriptRoot"
+  . ./.venv/Scripts/Activate.ps1
+
+  $cols  = [Console]::WindowWidth
+  $lines = [Console]::WindowHeight
+  mode con: cols=$cols lines=$lines
+
+  textual run --dev run_app.py
+'@
+)

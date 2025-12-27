@@ -48,13 +48,22 @@ def discover_tcss_near_py(
     Założenie: tcss leży bezpośrednio w folderze subpackage (nie rekurencyjnie).
     """
     found: list[tuple[str, str]] = []
+
+    root = resources.files(package)
+    for item in root.iterdir():
+        if item.is_file() and item.name.endswith(".tcss"):
+            found.append((package, item.name))
+
+
     for sub in subpackages:
         pkg_name = f"{package}.{sub}"
         root = resources.files(pkg_name)
         for item in root.iterdir():
             if item.is_file() and item.name.endswith(".tcss"):
                 found.append((pkg_name, item.name))
+
     found.sort(key=lambda x: (x[0], x[1]))
+
     return found
 
 if __name__ == "__main__":

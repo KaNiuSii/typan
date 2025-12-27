@@ -1,4 +1,5 @@
 import os
+import shutil
 import sys
 import subprocess
 
@@ -15,10 +16,12 @@ if __name__ == "__main__":
         env = os.environ.copy()
         env["TYPAN_NEW_CMD"] = "1"
 
+        terminal_size = shutil.get_terminal_size()
+
         subprocess.Popen(
             [
                 "cmd", "/c", "start", "/max", "cmd", "/k",
-                "mode con cols=200 lines=60 &&",
+                f"mode con cols={terminal_size[0]} lines={terminal_size[1]} &&",
                 sys.executable, __file__,
             ],
             env=env,
