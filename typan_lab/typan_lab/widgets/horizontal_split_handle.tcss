@@ -1,0 +1,20 @@
+HorizontalSplitHandle {
+    height: 1;
+    min-height: 1;
+    width: 100%;
+    content-align: center middle;
+    opacity: 0.8;
+    background: $panel;
+}
+
+HorizontalSplitHandle.-hover {
+    height: 2;
+    opacity: 1.0;
+    background: $boost;
+}
+
+HorizontalSplitHandle.-dragging {
+    height: 2;
+    opacity: 1.0;
+    background: $accent;
+}

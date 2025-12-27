@@ -1,0 +1,21 @@
+VerticalSplitHandle {
+    width: 2;
+    min-width: 2;
+    content-align: center middle;
+    height: 100%;
+    opacity: 0.8;
+    background: $panel;          /* lekko odcina od tła */
+}
+
+/* “symulacja kursora” = widać że to draggable */
+VerticalSplitHandle.-hover {
+    width: 3;
+    opacity: 1.0;
+    background: $boost;
+}
+
+VerticalSplitHandle.-dragging {
+    width: 3;
+    opacity: 1.0;
+    background: $accent;
+}

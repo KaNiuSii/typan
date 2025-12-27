@@ -8,9 +8,12 @@ import shutil
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
+from textual.reactive import reactive
 from textual.screen import Screen
 from textual.widgets import Footer
 
+from typan_lab.widgets.horizontal_split_handle import HorizontalSplitHandle
+from typan_lab.widgets.vertical_split_handle import VerticalSplitHandle
 from typan_lab.widgets.terminal_panel import TerminalPanel
 from typan_lab.widgets.status_bar import StatusBar
 
@@ -39,6 +42,10 @@ class WorkspaceScreen(Screen):
         Binding("ctrl+p", "command_palette", "Command", priority=True),
     ]
 
+    left_width: reactive[int] = reactive(32)
+    editor_weight: reactive[int] = reactive(1)
+    terminal_weight: reactive[int] = reactive(12)
+
     def _run_async(self, coro) -> None:
         asyncio.create_task(coro)
 
@@ -50,9 +57,10 @@ class WorkspaceScreen(Screen):
         with Vertical(id="workspace-root"):
             with Horizontal(id="workspace-main"):
                 yield ProjectTree(self.project_root, id="left")
-
+                yield VerticalSplitHandle(min_width=18, max_width=80, id="left-split")
                 with Vertical(id="right"):
                     yield EditorPanel(id="editor")
+                    yield HorizontalSplitHandle(id="editor-terminal-split")
                     yield TerminalPanel(id="terminal")
 
             yield StatusBar(id="status")
@@ -72,11 +80,6 @@ class WorkspaceScreen(Screen):
     # ------------------------------------------------------------------
     # Actions
     # ------------------------------------------------------------------
-
-    def action_command_palette(self) -> None:
-        self.query_one(TerminalPanel).write(
-            "\n> Ctrl+P pressed (command palette stub)\n"
-        )
 
     def action_close_tab(self) -> None:
         app = self.app  # type: ignore
@@ -240,6 +243,36 @@ class WorkspaceScreen(Screen):
     # Message handlers
     # ------------------------------------------------------------------
 
+    def on_horizontal_split_handle_split_dragged(self, msg: HorizontalSplitHandle.SplitDragged) -> None:
+        right = self.query_one("#right")
+
+        # pozycja Y splitu wewnątrz #right
+        local_y = msg.screen_y - right.region.y
+
+        # uwzględnij pasek splittera (ma 1-2 linie, zależnie od hover/drag)
+        split = self.query_one(HorizontalSplitHandle)
+        split_h = max(1, split.size.height)
+
+        total = right.region.height - split_h
+        if total <= 2:
+            return
+
+        min_editor = 6
+        min_terminal = 6
+
+        # clamp: editor min, terminal min
+        editor_cells = max(min_editor, min(local_y, total - min_terminal))
+        terminal_cells = max(min_terminal, total - editor_cells)
+
+        # używamy fr jako “wagi” ~ liczbie linii
+        self.editor_weight = editor_cells
+        self.terminal_weight = terminal_cells
+        self._apply_layout_sizes()
+
+    def on_vertical_split_handle_split_dragged(self, msg: VerticalSplitHandle.SplitDragged) -> None:
+        self.left_width = msg.new_width
+        self._apply_layout_sizes()
+
     def on_open_file_requested(self, msg: OpenFileRequested) -> None:
         self._open_file(msg.path)
 
@@ -320,6 +353,18 @@ class WorkspaceScreen(Screen):
 
         self._sync_tabs_and_status()
         self._sync_editor_text()
+
+    def _apply_layout_sizes(self) -> None:
+        left = self.query_one("#left")
+        editor = self.query_one("#editor")
+        terminal = self.query_one("#terminal")
+
+        left.styles.width = self.left_width
+
+        editor.styles.height = f"{self.editor_weight}fr"
+        terminal.styles.height = f"{self.terminal_weight}"
+
+        self.refresh(layout=True)
 
     # ------------------------------------------------------------------
     # UI sync
