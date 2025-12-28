@@ -102,7 +102,7 @@ class TerminalPanel(Widget):
         if not self._session or not self._cwd:
             return
 
-        pkg_root = Path(r"C:\Users\Kacper\Desktop\typan\typan")
+        pkg_root = Path(__file__).resolve().parent.parent.parent.parent / "typan"
         if not pkg_root.exists():
             return
 
@@ -228,3 +228,7 @@ class TerminalPanel(Widget):
 
         self._out.load_text(self._buffer)
         self._out.scroll_end(animate=False)
+
+if __name__ == "__main__":
+    xd = Path(__file__).resolve().parent.parent.parent.parent / "typan"
+    print(xd)
